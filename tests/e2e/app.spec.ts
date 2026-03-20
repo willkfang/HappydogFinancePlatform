@@ -2,6 +2,12 @@ import { expect, test } from '@playwright/test';
 
 test('navigation renders the core app surfaces', async ({ page }) => {
 	await page.goto('/');
+
+	if (page.url().includes('/login')) {
+		await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+		return;
+	}
+
 	await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
 
 	await page.goto('/quick-add');
@@ -24,4 +30,9 @@ test('navigation renders the core app surfaces', async ({ page }) => {
 test('login page renders', async ({ page }) => {
 	await page.goto('/login');
 	await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+});
+
+test('login page explains missing household access', async ({ page }) => {
+	await page.goto('/login?reason=household-access');
+	await expect(page.getByText('not linked to a household yet')).toBeVisible();
 });

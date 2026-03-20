@@ -25,14 +25,14 @@ async function getActiveHouseholdId(client: DatabaseClient) {
 		.select('household_id')
 		.eq('user_id', user.id)
 		.limit(1)
-		.single();
+		.maybeSingle();
 
 	if (error) throw error;
+	if (!data?.household_id) {
+		throw new Error('Your account is not linked to a household yet.');
+	}
 
-	return {
-		householdId: String((data as { household_id: string }).household_id),
-		userId: user.id
-	};
+	return { householdId: data.household_id, userId: user.id };
 }
 
 async function listOptions(client: DatabaseClient, table: string): Promise<ReferenceOption[]> {

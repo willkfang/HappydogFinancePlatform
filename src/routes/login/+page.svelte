@@ -21,6 +21,14 @@
 	let { data, form }: { data: PageData; form: LoginFormState | null } = $props();
 
 	const values = $derived(form?.values ?? { email: '', password: '' });
+	const setupMessage = $derived.by(() => {
+		if (form?.message) return form.message;
+		if (data.reason === 'household-access') {
+			return 'This account signed in successfully, but it is not linked to a household yet.';
+		}
+
+		return null;
+	});
 </script>
 
 <div class="mx-auto flex min-h-screen max-w-md items-center px-4 py-8">
@@ -64,8 +72,8 @@
 					{/if}
 				</label>
 
-				{#if form?.message}
-					<p class="text-sm text-destructive">{form.message}</p>
+				{#if setupMessage}
+					<p class="text-sm text-destructive">{setupMessage}</p>
 				{:else if !data.configured}
 					<p class="text-sm text-muted-foreground">
 						Add the public Supabase environment values before expecting sign-in to work.
@@ -74,6 +82,16 @@
 
 				<Button disabled={!data.configured}>Sign in</Button>
 			</form>
+
+			<div class="mt-6 rounded-xl border bg-muted/40 p-4 text-sm">
+				<p class="font-medium">Setup checklist</p>
+				<ul class="mt-2 space-y-2 text-muted-foreground">
+					<li>1. Add the two public Supabase env vars for local and Vercel.</li>
+					<li>2. Create the two Supabase Auth users in the dashboard.</li>
+					<li>3. Run `launch_bootstrap.sql` to map those users into `household_users`.</li>
+					<li>4. Run `reference_dimensions.sql` so Quick Add has real save options.</li>
+				</ul>
+			</div>
 		</Card.Content>
 	</Card.Root>
 </div>

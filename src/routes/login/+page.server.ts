@@ -5,13 +5,15 @@ import { isSupabaseConfigured } from '$server/supabase/config';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const redirectTo = url.searchParams.get('redirectTo') || '/';
+	const reason = url.searchParams.get('reason') || null;
 
 	if (isSupabaseConfigured() && locals.user) {
 		throw redirect(303, redirectTo);
 	}
 
 	return {
-		redirectTo
+		redirectTo,
+		reason
 	};
 };
 
