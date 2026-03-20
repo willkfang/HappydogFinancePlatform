@@ -14,6 +14,9 @@
 			date: string;
 			type: string;
 			subtypeName: string;
+			accountName: string;
+			merchantName: string;
+			rawMerchantName: string;
 			paymentMethodName: string;
 			categoryName: string;
 			expensorName: string;
@@ -35,6 +38,9 @@
 			date: string;
 			type: string;
 			subtypeName: string;
+			accountName: string;
+			merchantName: string;
+			rawMerchantName: string;
 			paymentMethodName: string;
 			categoryName: string;
 			expensorName: string;
@@ -106,10 +112,30 @@
 
 				<div class="grid gap-4 sm:grid-cols-2">
 					<label class="grid gap-2 text-sm">
+						<span class="font-medium">Account</span>
+						<Input
+							name="accountName"
+							placeholder="Chase Joint Checking"
+							list="account-suggestions"
+							value={values.accountName}
+						/>
+					</label>
+					<label class="grid gap-2 text-sm">
+						<span class="font-medium">Merchant</span>
+						<Input
+							name="rawMerchantName"
+							placeholder="Target"
+							value={values.rawMerchantName}
+						/>
+					</label>
+				</div>
+
+				<div class="grid gap-4 sm:grid-cols-2">
+					<label class="grid gap-2 text-sm">
 						<span class="font-medium">Payment Method</span>
 						<Input
 							name="paymentMethodName"
-							placeholder="Venmo"
+							placeholder="Optional"
 							list="payment-method-suggestions"
 							value={values.paymentMethodName}
 						/>
@@ -121,7 +147,7 @@
 						<span class="font-medium">Category</span>
 						<Input
 							name="categoryName"
-							placeholder="Rental Income"
+							placeholder="Optional"
 							list="category-suggestions"
 							value={values.categoryName}
 						/>
@@ -136,7 +162,7 @@
 						<span class="font-medium">Expensor</span>
 						<Input
 							name="expensorName"
-							placeholder="Shared"
+							placeholder="Defaults to Shared"
 							list="expensor-suggestions"
 							value={values.expensorName}
 						/>
@@ -170,7 +196,17 @@
 						Database saving is disabled until Supabase env values are configured and the migrations
 						are run.
 					</p>
+				{:else}
+					<p class="text-sm text-muted-foreground">
+						Capture first, enrich later. Only date, amount, and type are required to save.
+					</p>
 				{/if}
+
+				<datalist id="account-suggestions">
+					{#each referenceData.accounts as account (account.id)}
+						<option value={account.name}></option>
+					{/each}
+				</datalist>
 
 				<datalist id="subtype-suggestions">
 					{#each referenceData.subtypes as subtype (subtype.id)}

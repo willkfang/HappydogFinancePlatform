@@ -10,6 +10,7 @@ export function createEmptyTransactionRepository(): TransactionRepository {
 	return {
 		async getReferenceData(): Promise<TransactionReferenceData> {
 			return {
+				accounts: [],
 				subtypes: [],
 				paymentMethods: [],
 				categories: [],

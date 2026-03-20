@@ -4,9 +4,10 @@ import {
 	classifyTransaction
 } from '../../src/lib/domain/finance/finance.insights';
 import type { TransactionRecord } from '../../src/lib/domain/transactions/transaction.types';
+import { makeTransactionRecord } from './transaction.fixture';
 
 const fixture: TransactionRecord[] = [
-	{
+	makeTransactionRecord({
 		id: '1',
 		date: '2026-03-01',
 		amount: 5000,
@@ -19,8 +20,8 @@ const fixture: TransactionRecord[] = [
 		status: 'complete',
 		legacySourceId: null,
 		createdBy: null
-	},
-	{
+	}),
+	makeTransactionRecord({
 		id: '2',
 		date: '2026-03-02',
 		amount: 1450,
@@ -33,8 +34,8 @@ const fixture: TransactionRecord[] = [
 		status: 'complete',
 		legacySourceId: null,
 		createdBy: null
-	},
-	{
+	}),
+	makeTransactionRecord({
 		id: '3',
 		date: '2026-03-03',
 		amount: 350,
@@ -47,8 +48,8 @@ const fixture: TransactionRecord[] = [
 		status: 'review',
 		legacySourceId: null,
 		createdBy: null
-	},
-	{
+	}),
+	makeTransactionRecord({
 		id: '4',
 		date: '2026-03-04',
 		amount: 220,
@@ -61,7 +62,7 @@ const fixture: TransactionRecord[] = [
 		status: 'complete',
 		legacySourceId: null,
 		createdBy: null
-	}
+	})
 ];
 
 describe('classifyTransaction', () => {

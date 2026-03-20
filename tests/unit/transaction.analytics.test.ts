@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { buildDashboardAnalytics } from '../../src/lib/domain/transactions/transaction.analytics';
 import type { TransactionRecord } from '../../src/lib/domain/transactions/transaction.types';
+import { makeTransactionRecord } from './transaction.fixture';
 
 const fixture: TransactionRecord[] = [
-	{
+	makeTransactionRecord({
 		id: 'txn_1',
 		date: '2026-03-10',
 		amount: 1450,
@@ -16,8 +17,8 @@ const fixture: TransactionRecord[] = [
 		status: 'complete',
 		legacySourceId: '1775',
 		createdBy: 'user_1'
-	},
-	{
+	}),
+	makeTransactionRecord({
 		id: 'txn_2',
 		date: '2026-03-11',
 		amount: 210,
@@ -30,8 +31,8 @@ const fixture: TransactionRecord[] = [
 		status: 'review',
 		legacySourceId: null,
 		createdBy: 'user_1'
-	},
-	{
+	}),
+	makeTransactionRecord({
 		id: 'txn_3',
 		date: '2026-03-12',
 		amount: 78,
@@ -44,8 +45,8 @@ const fixture: TransactionRecord[] = [
 		status: 'complete',
 		legacySourceId: null,
 		createdBy: 'user_1'
-	},
-	{
+	}),
+	makeTransactionRecord({
 		id: 'txn_4',
 		date: '2026-03-13',
 		amount: 125,
@@ -58,7 +59,7 @@ const fixture: TransactionRecord[] = [
 		status: 'complete',
 		legacySourceId: null,
 		createdBy: 'user_1'
-	}
+	})
 ];
 
 describe('buildDashboardAnalytics', () => {

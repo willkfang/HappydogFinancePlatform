@@ -13,6 +13,9 @@ export type TransactionRecord = {
 	amount: number;
 	type: TransactionType;
 	subtypeName: string;
+	accountName: string;
+	merchantName: string;
+	rawMerchantName: string;
 	paymentMethodName: string;
 	categoryName: string;
 	expensorName: string;
@@ -23,6 +26,7 @@ export type TransactionRecord = {
 };
 
 export type TransactionReferenceData = {
+	accounts: ReferenceOption[];
 	subtypes: ReferenceOption[];
 	paymentMethods: ReferenceOption[];
 	categories: ReferenceOption[];

@@ -53,6 +53,10 @@ async function listOptions(client: DatabaseClient, table: string): Promise<Refer
 }
 
 async function resolveReferenceId(client: DatabaseClient, table: string, name: string) {
+	if (!name.trim()) {
+		return null;
+	}
+
 	const { householdId } = await getActiveHouseholdId(client);
 
 	const { data, error } = await client
@@ -71,14 +75,15 @@ async function resolveReferenceId(client: DatabaseClient, table: string, name: s
 export function createSupabaseTransactionRepository(client: DatabaseClient): TransactionRepository {
 	return {
 		async getReferenceData(): Promise<TransactionReferenceData> {
-			const [subtypes, paymentMethods, categories, expensors] = await Promise.all([
+			const [accounts, subtypes, paymentMethods, categories, expensors] = await Promise.all([
+				listOptions(client, 'accounts'),
 				listOptions(client, 'transaction_subtypes'),
 				listOptions(client, 'payment_methods'),
 				listOptions(client, 'categories'),
 				listOptions(client, 'expensors')
 			]);
 
-			return { subtypes, paymentMethods, categories, expensors };
+			return { accounts, subtypes, paymentMethods, categories, expensors };
 		},
 
 		async listTransactions(): Promise<TransactionRecord[]> {
@@ -87,7 +92,7 @@ export function createSupabaseTransactionRepository(client: DatabaseClient): Tra
 			const { data, error } = await client
 				.from('transactions')
 				.select(
-					'id, transaction_date, amount, transaction_type, status, note, legacy_source_id, created_by, transaction_subtypes(name), payment_methods(name), categories(name), expensors(name)'
+					'id, transaction_date, amount, transaction_type, status, note, legacy_source_id, created_by, raw_merchant_name, transaction_subtypes(name), payment_methods(name), categories(name), expensors(name), accounts(name), merchants(normalized_name)'
 				)
 				.eq('household_id', householdId)
 				.order('transaction_date', { ascending: false })
@@ -106,10 +111,13 @@ export function createSupabaseTransactionRepository(client: DatabaseClient): Tra
 							note: string | null;
 							legacy_source_id: string | null;
 							created_by: string | null;
+							raw_merchant_name: string | null;
 							transaction_subtypes?: { name?: string | null } | null;
 							payment_methods?: { name?: string | null } | null;
 							categories?: { name?: string | null } | null;
 							expensors?: { name?: string | null } | null;
+							accounts?: { name?: string | null } | null;
+							merchants?: { normalized_name?: string | null } | null;
 					  }[]
 					| null) ?? []
 			).map((row) => ({
@@ -118,6 +126,9 @@ export function createSupabaseTransactionRepository(client: DatabaseClient): Tra
 				amount: Number(row.amount),
 				type: row.transaction_type as TransactionRecord['type'],
 				subtypeName: String(row.transaction_subtypes?.name ?? ''),
+				accountName: String(row.accounts?.name ?? ''),
+				merchantName: String(row.merchants?.normalized_name ?? ''),
+				rawMerchantName: String(row.raw_merchant_name ?? ''),
 				paymentMethodName: String(row.payment_methods?.name ?? ''),
 				categoryName: String(row.categories?.name ?? ''),
 				expensorName: String(row.expensors?.name ?? ''),
@@ -151,12 +162,15 @@ export function createSupabaseTransactionRepository(client: DatabaseClient): Tra
 		async createTransaction(input: QuickAddTransactionInput): Promise<TransactionRecord> {
 			const { householdId, userId } = await getActiveHouseholdId(client);
 
-			const [subtypeId, paymentMethodId, categoryId, expensorId] = await Promise.all([
+			const [subtypeId, accountId, merchantId, paymentMethodId, categoryId, expensorId] =
+				await Promise.all([
 				resolveReferenceId(client, 'transaction_subtypes', input.subtypeName),
+				resolveReferenceId(client, 'accounts', input.accountName),
+				resolveReferenceId(client, 'merchants', input.merchantName),
 				resolveReferenceId(client, 'payment_methods', input.paymentMethodName),
 				resolveReferenceId(client, 'categories', input.categoryName),
 				resolveReferenceId(client, 'expensors', input.expensorName)
-			]);
+				]);
 
 			const insertPayload: Record<string, unknown> = {
 				household_id: householdId,
@@ -166,6 +180,9 @@ export function createSupabaseTransactionRepository(client: DatabaseClient): Tra
 				status: input.status,
 				note: input.note,
 				legacy_source_id: input.legacySourceId,
+				account_id: accountId,
+				merchant_id: merchantId,
+				raw_merchant_name: input.rawMerchantName,
 				subtype_id: subtypeId,
 				payment_method_id: paymentMethodId,
 				category_id: categoryId,
@@ -177,7 +194,7 @@ export function createSupabaseTransactionRepository(client: DatabaseClient): Tra
 				.from('transactions')
 				.insert(insertPayload as never)
 				.select(
-					'id, transaction_date, amount, transaction_type, status, note, legacy_source_id, created_by, transaction_subtypes(name), payment_methods(name), categories(name), expensors(name)'
+					'id, transaction_date, amount, transaction_type, status, note, legacy_source_id, created_by, raw_merchant_name, transaction_subtypes(name), payment_methods(name), categories(name), expensors(name), accounts(name), merchants(normalized_name)'
 				)
 				.single();
 
@@ -192,10 +209,13 @@ export function createSupabaseTransactionRepository(client: DatabaseClient): Tra
 				note: string | null;
 				legacy_source_id: string | null;
 				created_by: string | null;
+				raw_merchant_name: string | null;
 				transaction_subtypes?: { name?: string | null } | null;
 				payment_methods?: { name?: string | null } | null;
 				categories?: { name?: string | null } | null;
 				expensors?: { name?: string | null } | null;
+				accounts?: { name?: string | null } | null;
+				merchants?: { normalized_name?: string | null } | null;
 			};
 
 			return {
@@ -204,6 +224,9 @@ export function createSupabaseTransactionRepository(client: DatabaseClient): Tra
 				amount: Number(row.amount),
 				type: row.transaction_type as TransactionRecord['type'],
 				subtypeName: String(row.transaction_subtypes?.name ?? ''),
+				accountName: String(row.accounts?.name ?? ''),
+				merchantName: String(row.merchants?.normalized_name ?? ''),
+				rawMerchantName: String(row.raw_merchant_name ?? ''),
 				paymentMethodName: String(row.payment_methods?.name ?? ''),
 				categoryName: String(row.categories?.name ?? ''),
 				expensorName: String(row.expensors?.name ?? ''),

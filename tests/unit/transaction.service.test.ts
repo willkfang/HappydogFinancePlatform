@@ -15,10 +15,13 @@ function createRepository(): TransactionRepository {
 			date: input.date,
 			amount: input.amount,
 			type: input.type,
-			subtypeName: input.subtypeName,
-			paymentMethodName: input.paymentMethodName,
-			categoryName: input.categoryName,
-			expensorName: input.expensorName,
+			subtypeName: input.subtypeName ?? '',
+			accountName: input.accountName ?? '',
+			merchantName: input.merchantName ?? '',
+			rawMerchantName: input.rawMerchantName ?? '',
+			paymentMethodName: input.paymentMethodName ?? '',
+			categoryName: input.categoryName ?? '',
+			expensorName: input.expensorName ?? '',
 			note: input.note,
 			status: input.status,
 			legacySourceId: input.legacySourceId ?? null,
@@ -35,15 +38,12 @@ describe('createTransaction', () => {
 			date: '2019-01-12',
 			amount: '',
 			type: 'income',
-			subtypeName: '',
-			paymentMethodName: '',
-			categoryName: '',
-			expensorName: ''
+			rawMerchantName: ''
 		});
 
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
-			expect(result.errors.subtypeName).toBeDefined();
+			expect(result.errors.amount).toBeDefined();
 		}
 		expect(repository.createTransaction).not.toHaveBeenCalled();
 	});
@@ -56,6 +56,8 @@ describe('createTransaction', () => {
 			amount: '$1,450.00',
 			type: 'income',
 			subtypeName: '929 Kirts',
+			accountName: 'Chase Joint Checking',
+			rawMerchantName: 'Zelle',
 			paymentMethodName: 'Venmo',
 			categoryName: 'Rental Income',
 			expensorName: 'Shared',
@@ -66,6 +68,27 @@ describe('createTransaction', () => {
 		expect(result.ok).toBe(true);
 		expect(repository.createTransaction).toHaveBeenCalledOnce();
 	});
+
+	it('normalizes a capture-first payload with optional enrichment omitted', async () => {
+		const repository = createRepository();
+
+		const result = await createTransaction(repository, {
+			date: '2019-01-12',
+			amount: '18.44',
+			type: 'expense',
+			rawMerchantName: 'Target'
+		});
+
+		expect(result.ok).toBe(true);
+		expect(repository.createTransaction).toHaveBeenCalledWith(
+			expect.objectContaining({
+				rawMerchantName: 'Target',
+				categoryName: '',
+				paymentMethodName: '',
+				expensorName: 'Shared'
+			})
+		);
+	});
 });
 
 describe('normalizeQuickAddDefaults', () => {
@@ -73,12 +96,14 @@ describe('normalizeQuickAddDefaults', () => {
 		const defaults = normalizeQuickAddDefaults({
 			type: 'income',
 			expensorName: 'Shared',
-			subtypeName: '929 Kirts'
+			subtypeName: '929 Kirts',
+			accountName: 'Chase Joint Checking'
 		});
 
 		expect(defaults.type).toBe('income');
 		expect(defaults.expensorName).toBe('Shared');
 		expect(defaults.subtypeName).toBe('929 Kirts');
+		expect(defaults.accountName).toBe('Chase Joint Checking');
 		expect(defaults.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 	});
 });
