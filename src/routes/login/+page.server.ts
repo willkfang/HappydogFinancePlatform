@@ -20,6 +20,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 export const actions: Actions = {
 	default: async ({ locals, request, url }) => {
 		if (!isSupabaseConfigured() || !locals.supabase) {
+			console.error('[auth] Password login blocked because Supabase is not configured');
+
 			return fail(503, {
 				status: 503,
 				message: 'Supabase auth is not configured yet.',
@@ -29,9 +31,25 @@ export const actions: Actions = {
 		}
 
 		const formData = Object.fromEntries(await request.formData());
+		const email = typeof formData.email === 'string' ? formData.email.trim().toLowerCase() : null;
+
+		console.info('[auth] Password login attempt received', {
+			email,
+			redirectTo: String(formData.redirectTo ?? url.searchParams.get('redirectTo') ?? '/')
+		});
+
 		const result = await signInWithPassword(locals.supabase, formData);
 
 		if (!result.ok) {
+			console.warn('[auth] Password login attempt failed', {
+				email,
+				message: result.errors.form?.[0] ?? null,
+				fieldErrors: {
+					email: result.errors.email ?? [],
+					password: result.errors.password ?? []
+				}
+			});
+
 			return fail(400, {
 				status: 400,
 				message: result.errors.form?.[0] ?? 'Enter a valid email and password.',
@@ -42,6 +60,11 @@ export const actions: Actions = {
 				}
 			});
 		}
+
+		console.info('[auth] Password login redirecting after success', {
+			email,
+			redirectTo: String(formData.redirectTo ?? url.searchParams.get('redirectTo') ?? '/')
+		});
 
 		throw redirect(303, String(formData.redirectTo ?? url.searchParams.get('redirectTo') ?? '/'));
 	}
