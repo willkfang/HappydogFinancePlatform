@@ -30,6 +30,7 @@ test('navigation renders the core app surfaces', async ({ page }) => {
 test('login page renders', async ({ page }) => {
 	await page.goto('/login');
 	await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Continue with Google' })).toBeVisible();
 });
 
 test('login page explains missing household access', async ({ page }) => {

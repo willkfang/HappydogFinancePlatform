@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { buttonVariants } from '$ui/button';
 	import * as Card from '$ui/card';
 	import Button from '$ui/button/button.svelte';
 	import Input from '$ui/input/input.svelte';
+	import { cn } from '$lib/utils';
 	import type { PageData } from './$types';
 
 	type LoginFormState = {
@@ -25,6 +27,12 @@
 		if (form?.message) return form.message;
 		if (data.reason === 'household-access') {
 			return 'This account signed in successfully, but it is not linked to a household yet.';
+		}
+		if (data.reason === 'oauth-unavailable') {
+			return 'Google sign-in is not configured in Supabase yet.';
+		}
+		if (data.reason === 'auth-callback') {
+			return 'Google sign-in returned to the app, but the session exchange failed.';
 		}
 
 		return null;
@@ -82,6 +90,19 @@
 
 				<Button disabled={!data.configured}>Sign in</Button>
 			</form>
+
+			<div class="my-4 flex items-center gap-3">
+				<div class="h-px flex-1 bg-border"></div>
+				<span class="text-xs uppercase tracking-[0.18em] text-muted-foreground">or</span>
+				<div class="h-px flex-1 bg-border"></div>
+			</div>
+
+			<a
+				href={`/auth/google?next=${encodeURIComponent(data.redirectTo)}`}
+				class={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
+			>
+				Continue with Google
+			</a>
 
 			<div class="mt-6 rounded-xl border bg-muted/40 p-4 text-sm">
 				<p class="font-medium">Setup checklist</p>
