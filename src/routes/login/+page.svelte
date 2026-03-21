@@ -53,6 +53,20 @@
 		<Card.Content>
 			<form method="POST" class="grid gap-4">
 				<input type="hidden" name="redirectTo" value={data.redirectTo} />
+
+				{#if setupMessage}
+					<div class="rounded-xl border border-destructive/30 bg-destructive/8 px-3 py-3">
+						<p class="text-sm font-medium text-destructive">Sign-in problem</p>
+						<p class="mt-1 text-sm text-destructive">{setupMessage}</p>
+					</div>
+				{:else if !data.configured}
+					<div class="rounded-xl border bg-muted/40 px-3 py-3">
+						<p class="text-sm text-muted-foreground">
+							Add the public Supabase environment values before expecting sign-in to work.
+						</p>
+					</div>
+				{/if}
+
 				<label class="grid gap-2 text-sm">
 					<span class="font-medium">Email</span>
 					<Input
@@ -75,18 +89,13 @@
 						autocomplete="current-password"
 						value={values.password}
 					/>
+					<span class="text-xs text-muted-foreground">
+						Use the password stored for this Supabase Auth user. Minimum 8 characters.
+					</span>
 					{#if form?.errors?.password}
 						<span class="text-xs text-destructive">{form.errors.password[0]}</span>
 					{/if}
 				</label>
-
-				{#if setupMessage}
-					<p class="text-sm text-destructive">{setupMessage}</p>
-				{:else if !data.configured}
-					<p class="text-sm text-muted-foreground">
-						Add the public Supabase environment values before expecting sign-in to work.
-					</p>
-				{/if}
 
 				<Button disabled={!data.configured}>Sign in</Button>
 			</form>

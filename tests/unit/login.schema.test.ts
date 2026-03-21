@@ -18,5 +18,11 @@ describe('loginSchema', () => {
 		});
 
 		expect(parsed.success).toBe(false);
+		if (!parsed.success) {
+			expect(parsed.error.flatten().fieldErrors.email?.[0]).toBe('Enter a valid email address.');
+			expect(parsed.error.flatten().fieldErrors.password?.[0]).toBe(
+				'Password must be at least 8 characters.'
+			);
+		}
 	});
 });
