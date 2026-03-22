@@ -10,7 +10,23 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	}
 
 	if (isSupabaseConfigured() && locals.supabase && locals.user) {
-		const linkedToHousehold = await hasHouseholdAccess(locals.supabase, locals.user.id);
+		let linkedToHousehold = false;
+
+		try {
+			linkedToHousehold = await hasHouseholdAccess(locals.supabase, locals.user.id);
+		} catch (error) {
+			console.error('[auth] Household lookup failed during app load', {
+				userId: locals.user.id,
+				error: error instanceof Error ? { name: error.name, message: error.message } : error
+			});
+
+			await locals.supabase.auth.signOut();
+			const redirectTo = `${url.pathname}${url.search}`;
+			throw redirect(
+				303,
+				`/login?reason=household-access&redirectTo=${encodeURIComponent(redirectTo)}`
+			);
+		}
 
 		if (!linkedToHousehold) {
 			await locals.supabase.auth.signOut();

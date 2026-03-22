@@ -6,6 +6,23 @@ type AuthFormErrors = {
 	form?: string[];
 };
 
+function formatError(error: unknown) {
+	if (error instanceof Error) {
+		return {
+			name: error.name,
+			message: error.message
+		};
+	}
+
+	if (typeof error === 'object' && error !== null) {
+		return error;
+	}
+
+	return {
+		message: String(error)
+	};
+}
+
 function getAttemptEmail(input: Record<string, FormDataEntryValue | string | undefined>) {
 	const rawEmail = input.email;
 
@@ -85,7 +102,26 @@ export async function signInWithPassword(
 		};
 	}
 
-	const linkedToHousehold = await hasHouseholdAccess(supabase, user.id);
+	let linkedToHousehold = false;
+
+	try {
+		linkedToHousehold = await hasHouseholdAccess(supabase, user.id);
+	} catch (lookupError) {
+		console.error('[auth] Household lookup failed after password sign-in', {
+			email: attemptEmail,
+			userId: user.id,
+			error: formatError(lookupError)
+		});
+
+		await supabase.auth.signOut();
+
+		return {
+			ok: false as const,
+			errors: {
+				form: ['Signed in, but household access could not be verified. Please try again.']
+			}
+		};
+	}
 
 	if (!linkedToHousehold) {
 		console.warn('[auth] Password sign-in missing household access', {

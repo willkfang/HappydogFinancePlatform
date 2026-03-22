@@ -5,7 +5,7 @@ function createSupabaseStub({
 	signInError = null,
 	userId = 'user-1',
 	householdRow = { household_id: 'household-1' } as { household_id: string } | null,
-	householdError = null
+	householdError = null as { message: string } | null
 } = {}) {
 	const signOut = vi.fn().mockResolvedValue({ error: null });
 
@@ -50,6 +50,22 @@ describe('signInWithPassword', () => {
 		expect(result.ok).toBe(false);
 		if (result.ok) throw new Error('Expected failed result');
 		expect(result.errors.form?.[0]).toContain('not linked to a household');
+		expect(supabase.auth.signOut).toHaveBeenCalledTimes(1);
+	});
+
+	it('returns a recoverable error when household lookup throws', async () => {
+		const supabase = createSupabaseStub({
+			householdError: { message: 'relation "household_users" does not exist' }
+		});
+
+		const result = await signInWithPassword(supabase as never, {
+			email: 'user@example.com',
+			password: 'password123'
+		});
+
+		expect(result.ok).toBe(false);
+		if (result.ok) throw new Error('Expected failed result');
+		expect(result.errors.form?.[0]).toContain('could not be verified');
 		expect(supabase.auth.signOut).toHaveBeenCalledTimes(1);
 	});
 
