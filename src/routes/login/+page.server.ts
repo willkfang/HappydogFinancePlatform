@@ -50,7 +50,7 @@ export const actions: Actions = {
 				}
 			});
 
-			return fail(400, {
+			return {
 				status: 400,
 				message: result.errors.form?.[0] ?? 'Enter a valid email and password.',
 				errors: result.errors,
@@ -58,7 +58,7 @@ export const actions: Actions = {
 					email: String(formData.email ?? ''),
 					password: ''
 				}
-			});
+			};
 		}
 
 		console.info('[auth] Password login redirecting after success', {
