@@ -97,7 +97,7 @@
 					{/if}
 				</label>
 
-				<Button disabled={!data.configured}>Sign in</Button>
+				<Button type="submit" disabled={!data.configured}>Sign in</Button>
 			</form>
 
 			<div class="my-4 flex items-center gap-3">

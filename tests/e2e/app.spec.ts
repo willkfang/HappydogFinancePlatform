@@ -37,3 +37,9 @@ test('login page explains missing household access', async ({ page }) => {
 	await page.goto('/login?reason=household-access');
 	await expect(page.getByText('not linked to a household yet')).toBeVisible();
 });
+
+test('login form submits and renders validation feedback', async ({ page }) => {
+	await page.goto('/login');
+	await page.getByRole('button', { name: 'Sign in' }).click();
+	await expect(page.getByText('Enter a valid email address.')).toBeVisible();
+});
