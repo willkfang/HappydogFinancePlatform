@@ -188,7 +188,7 @@
 				{/if}
 
 				<div class="flex flex-wrap gap-3 pt-2">
-					<Button disabled={!configured}>Save transaction</Button>
+					<Button type="submit" disabled={!configured}>Save transaction</Button>
 				</div>
 
 				{#if !configured}

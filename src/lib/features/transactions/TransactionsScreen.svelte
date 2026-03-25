@@ -36,12 +36,17 @@
 				<div class="grid gap-2 md:grid-cols-[120px_minmax(0,1fr)_140px_120px] md:items-center">
 					<p class="text-sm text-muted-foreground">{transaction.date}</p>
 					<div>
-						<p class="font-medium">{transaction.subtypeName}</p>
+						<p class="font-medium">
+							{transaction.subtypeName || transaction.rawMerchantName || 'Untitled transaction'}
+						</p>
 						<p class="text-sm text-muted-foreground">
-							{transaction.categoryName} • {transaction.paymentMethodName} • {transaction.expensorName}
+							{transaction.categoryName || 'Uncategorized'} • {transaction.paymentMethodName || 'No payment method'} • {transaction.expensorName || 'No expensor'}
+						</p>
+						<p class="text-sm text-muted-foreground">
+							{transaction.accountName || 'No account'} • {transaction.rawMerchantName || transaction.merchantName || 'No merchant'}
 						</p>
 					</div>
-					<p class="text-sm">{transaction.status}</p>
+					<p class="text-sm capitalize">{transaction.status}</p>
 					<p class="text-right font-semibold">${transaction.amount.toFixed(2)}</p>
 				</div>
 				{#if index < transactions.length - 1}
