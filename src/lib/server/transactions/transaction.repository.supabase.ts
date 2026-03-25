@@ -11,19 +11,11 @@ import type { TransactionRepository } from './transaction.repository';
 
 type DatabaseClient = SupabaseClient<Database>;
 
-async function getActiveHouseholdId(client: DatabaseClient) {
-	const {
-		data: { user },
-		error: authError
-	} = await client.auth.getUser();
-
-	if (authError) throw authError;
-	if (!user) throw new Error('You must be signed in to access household data.');
-
+async function getActiveHouseholdId(client: DatabaseClient, userId: string) {
 	const { data, error } = await client
 		.from('household_users')
 		.select('household_id')
-		.eq('user_id', user.id)
+		.eq('user_id', userId)
 		.limit(1)
 		.maybeSingle();
 
@@ -32,11 +24,15 @@ async function getActiveHouseholdId(client: DatabaseClient) {
 		throw new Error('Your account is not linked to a household yet.');
 	}
 
-	return { householdId: data.household_id, userId: user.id };
+	return { householdId: data.household_id, userId };
 }
 
-async function listOptions(client: DatabaseClient, table: string): Promise<ReferenceOption[]> {
-	const { householdId } = await getActiveHouseholdId(client);
+async function listOptions(
+	client: DatabaseClient,
+	userId: string,
+	table: string
+): Promise<ReferenceOption[]> {
+	const { householdId } = await getActiveHouseholdId(client, userId);
 
 	const { data, error } = await client
 		.from(table)
@@ -52,12 +48,17 @@ async function listOptions(client: DatabaseClient, table: string): Promise<Refer
 	}));
 }
 
-async function resolveReferenceId(client: DatabaseClient, table: string, name: string) {
+async function resolveReferenceIdForUser(
+	client: DatabaseClient,
+	userId: string,
+	table: string,
+	name: string
+) {
 	if (!name.trim()) {
 		return null;
 	}
 
-	const { householdId } = await getActiveHouseholdId(client);
+	const { householdId } = await getActiveHouseholdId(client, userId);
 
 	const { data, error } = await client
 		.from(table)
@@ -72,22 +73,25 @@ async function resolveReferenceId(client: DatabaseClient, table: string, name: s
 	return String((data as { id: string }).id);
 }
 
-export function createSupabaseTransactionRepository(client: DatabaseClient): TransactionRepository {
+export function createSupabaseTransactionRepository(
+	client: DatabaseClient,
+	userId: string
+): TransactionRepository {
 	return {
 		async getReferenceData(): Promise<TransactionReferenceData> {
 			const [accounts, subtypes, paymentMethods, categories, expensors] = await Promise.all([
-				listOptions(client, 'accounts'),
-				listOptions(client, 'transaction_subtypes'),
-				listOptions(client, 'payment_methods'),
-				listOptions(client, 'categories'),
-				listOptions(client, 'expensors')
+				listOptions(client, userId, 'accounts'),
+				listOptions(client, userId, 'transaction_subtypes'),
+				listOptions(client, userId, 'payment_methods'),
+				listOptions(client, userId, 'categories'),
+				listOptions(client, userId, 'expensors')
 			]);
 
 			return { accounts, subtypes, paymentMethods, categories, expensors };
 		},
 
 		async listTransactions(): Promise<TransactionRecord[]> {
-			const { householdId } = await getActiveHouseholdId(client);
+			const { householdId } = await getActiveHouseholdId(client, userId);
 
 			const { data, error } = await client
 				.from('transactions')
@@ -160,16 +164,16 @@ export function createSupabaseTransactionRepository(client: DatabaseClient): Tra
 		},
 
 		async createTransaction(input: QuickAddTransactionInput): Promise<TransactionRecord> {
-			const { householdId, userId } = await getActiveHouseholdId(client);
+			const { householdId } = await getActiveHouseholdId(client, userId);
 
 			const [subtypeId, accountId, merchantId, paymentMethodId, categoryId, expensorId] =
 				await Promise.all([
-				resolveReferenceId(client, 'transaction_subtypes', input.subtypeName),
-				resolveReferenceId(client, 'accounts', input.accountName),
-				resolveReferenceId(client, 'merchants', input.merchantName),
-				resolveReferenceId(client, 'payment_methods', input.paymentMethodName),
-				resolveReferenceId(client, 'categories', input.categoryName),
-				resolveReferenceId(client, 'expensors', input.expensorName)
+				resolveReferenceIdForUser(client, userId, 'transaction_subtypes', input.subtypeName),
+				resolveReferenceIdForUser(client, userId, 'accounts', input.accountName),
+				resolveReferenceIdForUser(client, userId, 'merchants', input.merchantName),
+				resolveReferenceIdForUser(client, userId, 'payment_methods', input.paymentMethodName),
+				resolveReferenceIdForUser(client, userId, 'categories', input.categoryName),
+				resolveReferenceIdForUser(client, userId, 'expensors', input.expensorName)
 				]);
 
 			const insertPayload: Record<string, unknown> = {

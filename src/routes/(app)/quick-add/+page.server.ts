@@ -9,7 +9,7 @@ import {
 import { isSupabaseConfigured } from '$server/supabase/config';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const repository = createTransactionRepository(locals.supabase);
+	const repository = createTransactionRepository(locals);
 
 	return {
 		configured: isSupabaseConfigured(),
@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	default: async ({ locals, request }) => {
-		const repository = createTransactionRepository(locals.supabase);
+		const repository = createTransactionRepository(locals);
 		const formData = Object.fromEntries(await request.formData());
 
 		if (!isSupabaseConfigured()) {

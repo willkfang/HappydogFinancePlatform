@@ -4,7 +4,7 @@ import { isSupabaseConfigured } from '$server/supabase/config';
 import { createTransactionRepository } from '$server/transactions';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const repository = createTransactionRepository(locals.supabase);
+	const repository = createTransactionRepository(locals);
 
 	return {
 		configured: isSupabaseConfigured(),

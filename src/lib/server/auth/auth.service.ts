@@ -1,4 +1,5 @@
 import { loginSchema } from '$domain/auth/login.schema';
+import { createSupabaseAdminClient } from '$server/supabase/admin';
 
 type AuthFormErrors = {
 	email?: string[];
@@ -37,7 +38,10 @@ export async function hasHouseholdAccess(
 	supabase: NonNullable<App.Locals['supabase']>,
 	userId: string
 ) {
-	const { data, error } = await supabase
+	const adminClient = createSupabaseAdminClient();
+	const client = adminClient ?? supabase;
+
+	const { data, error } = await client
 		.from('household_users')
 		.select('household_id')
 		.eq('user_id', userId)
